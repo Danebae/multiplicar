@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplicación Aleatoria</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+      line-height: 2;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    #score, #timer, #problem, #result {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 15px;
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      width: 50%;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    #container {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #session {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Prueba de Multiplicación</h1>
+  <button id="startButton" onclick="startGame()">Empezar</button>
+  <div id="container" style="display: none;">
+    <div id="score">Puntuación: 0</div>
+    <div id="timer">Tiempo: 0.0 s</div>
+    <div id="problem"></div>
+    <input type="number" id="answer" placeholder="Tu respuesta" onkeypress="handleEnter(event)" disabled>
+    <div id="result"></div>
+    <button id="nextButton" style="display: none;" onclick="generateProblem()">Siguiente</button>
+  </div>
+  <div id="session"></div>
+
+  <script>
+    let num1, num2, correctAnswer;
+    let timerInterval;
+    let timer = 0;
+    let score = 0;
+
+    // Generar una ID de sesión única al cargar la página
+    const sessionId = generateSessionId();
+    document.getElementById("session").innerText = `Sesión: ${sessionId}`;
+
+    function generateSessionId() {
+      const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
+      for (let i = 0; i < 5; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    }
+
+    function startGame() {
+      document.getElementById("startButton").style.display = "none";
+      document.getElementById("container").style.display = "block";
+      generateProblem();
+    }
+
+    function generateProblem() {
+      clearInterval(timerInterval);
+      timer = 0;
+      document.getElementById("timer").innerText = `Tiempo: 0.0 s`;
+      document.getElementById("problem").innerText = "";
+      document.getElementById("result").innerText = "";
+      document.getElementById("nextButton").style.display = "none";
+      document.getElementById("answer").value = "";
+      document.getElementById("answer").disabled = false;
+
+      num1 = Math.floor(Math.random() * (9 - 2 + 1)) + 2; // Número entre 2 y 9
+      num2 = Math.floor(Math.random() * (9 - 4 + 1)) + 4; // Número entre 4 y 9
+      correctAnswer = num1 * num2;
+
+      document.getElementById("problem").innerText = `${num1} x ${num2} = ?`;
+      document.getElementById("answer").focus();
+
+      startTimer();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timer += 0.1;
+        document.getElementById("timer").innerText = `Tiempo: ${timer.toFixed(1)} s`;
+
+        if (timer >= 10) {
+          clearInterval(timerInterval);
+          handleTimeout();
+        }
+      }, 100);
+    }
+
+    function handleTimeout() {
+      const resultElement = document.getElementById("result");
+      resultElement.innerText = `Tiempo agotado. La respuesta correcta era ${correctAnswer}.`;
+      resultElement.style.color = "red";
+
+      // Restar un punto por no responder a tiempo
+      updateScore(-1);
+
+      document.getElementById("nextButton").style.display = "inline-block";
+      document.getElementById("nextButton").focus();
+      document.getElementById("answer").disabled = true;
+    }
+
+    function handleEnter(event) {
+      if (event.key === "Enter") {
+        clearInterval(timerInterval);
+
+        const userAnswer = parseInt(document.getElementById("answer").value);
+        const resultElement = document.getElementById("result");
+        document.getElementById("answer").disabled = true;
+
+        if (userAnswer === correctAnswer) {
+          resultElement.innerText = `¡Correcto! Tiempo: ${timer.toFixed(1)} s.`;
+          resultElement.style.color = "green";
+
+          if (timer < 3) {
+            updateScore(2); // Cambiado a 2 puntos para aciertos en menos de 3 segundos
+          } else if (timer < 6) {
+            updateScore(1);
+          }
+        } else {
+          resultElement.innerText = `Incorrecto. La respuesta correcta era ${correctAnswer}. Tiempo: ${timer.toFixed(1)} s.`;
+          resultElement.style.color = "red";
+          updateScore(-1);
+        }
+
+        document.getElementById("nextButton").style.display = "inline-block";
+        document.getElementById("nextButton").focus();
+      }
+    }
+
+    function updateScore(points) {
+      score += points;
+      if (score < 0) score = 0; // Asegurarse de que el marcador no sea negativo
+      document.getElementById("score").innerText = `Puntuación: ${score}`;
+    }
+  </script>
+</body>
+</html>
+
