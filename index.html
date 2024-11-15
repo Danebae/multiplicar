@@ -93,7 +93,7 @@
       document.getElementById("answer").value = "";
       document.getElementById("answer").disabled = false;
 
-      num1 = Math.floor(Math.random() * (9 - 2 + 1)) + 2; // Número entre 2 y 9
+      num1 = Math.floor(Math.random() * (9 - 3 + 1)) + 3; // Número entre 2 y 9
       num2 = Math.floor(Math.random() * (9 - 4 + 1)) + 4; // Número entre 4 y 9
       correctAnswer = num1 * num2;
 
@@ -141,7 +141,7 @@
           resultElement.style.color = "green";
 
           if (timer < 3) {
-            updateScore(2); // Cambiado a 2 puntos para aciertos en menos de 3 segundos
+            updateScore(2); // 2 puntos para aciertos en menos de 3 segundos
           } else if (timer < 6) {
             updateScore(1);
           }
@@ -158,7 +158,7 @@
 
     function updateScore(points) {
       score += points;
-      if (score < 0) score = 0; // Asegurarse de que el marcador no sea negativo
+      if (score < 0) score = 0;
       document.getElementById("score").innerText = `Puntuación: ${score}`;
     }
   </script>
