@@ -61,11 +61,13 @@
 			left: 20px;
 			font-weight: bold;
 		}
+
 		#info {
 			position: absolute;
 			bottom: 20px;
 			right: 20px;
 		}
+
 		#session {
 			position: absolute;
 			bottom: 20px;
@@ -141,10 +143,9 @@
 		let score = 0;
 		let gameStarted = false;
 		let targetScore = 0;
-		let isDifficult = false; // Indica si es modo difícil
-		let doublePointThreshold, pointThreshold, maxResponseTime; // Tiempo máximo permitido para responder
+		let isDifficult = false;
+		let doublePointThreshold, pointThreshold, maxResponseTime;
 		let repitiendo = false;
-		// Cargar récords desde localStorage al iniciar la página
 		function loadRecords() {
 			['50', '100', '200', '50_d', '100_d', '200_d'].forEach(key => {
 				const record = localStorage.getItem(`bestTime_${key}`);
@@ -169,8 +170,8 @@
 			targetScore = target;
 			isDifficult = difficult;
 			doublePointThreshold = difficult ? 2 : 3;
-			pointThreshold       = difficult ? 4 : 6;
-			maxResponseTime      = difficult ? 6 : 9;
+			pointThreshold = difficult ? 4 : 6;
+			maxResponseTime = difficult ? 6 : 9;
 			document.getElementById("selected").innerHTML = `Seleccionado: ${target} puntos ${nivel}.`;
 			document.getElementById("infoDoble").innerHTML = `Punto doble: ${doublePointThreshold}s.`
 			document.getElementById("infoNormal").innerHTML = `Punto normal: ${pointThreshold}s.`
@@ -255,11 +256,15 @@
 						resultElement.style.color = "green";
 						if (timer <= doublePointThreshold) {
 							updateScore(2);
+							resultElement.innerText = "¡Correcto! Has ganado 2 puntos.";
 						} else if (timer <= pointThreshold) {
 							updateScore(1);
+							resultElement.innerText = "¡Correcto! Has ganado 1 punto.";
+						} else {
+							resultElement.innerText = "¡Correcto!";
 						}
 					}
-					siguiente();
+					if (score < targetScore) siguiente();
 				} else {
 					if (isNaN(userAnswer)) {
 						resultElement.innerText = `Incorrecto. Tu respuesta no era un numero. La respuesta correcta era: "${correctAnswer}".`;
