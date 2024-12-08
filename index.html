@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Prueba de Multiplicación</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+			margin-top: 50px;
+			line-height: 2;
+		}
+
+		h1 {
+			font-size: 2.5em;
+			margin-bottom: 20px;
+		}
+
+		#score,
+		#timer,
+		#problem,
+		#result {
+			font-size: 2em;
+			margin-bottom: 20px;
+		}
+
+		input {
+			padding: 15px;
+			font-size: 1.5em;
+			margin-bottom: 20px;
+			width: 50%;
+		}
+
+		button {
+			padding: 15px 30px;
+			font-size: 1.5em;
+			cursor: pointer;
+			margin: 5px;
+			width: 250px;
+		}
+
+		#container {
+			margin-top: 20px;
+			display: none;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		#records {
+			font-size: 1.5em;
+			margin-top: 20px;
+			text-align: left;
+			display: inline-block;
+		}
+
+		#session {
+			position: absolute;
+			bottom: 20px;
+			left: 20px;
+			font-weight: bold;
+		}
+		#info {
+			position: absolute;
+			bottom: 20px;
+			right: 20px;
+		}
+		#session {
+			position: absolute;
+			bottom: 20px;
+			left: 20px;
+			font-size: 1.5em;
+			font-weight: bold;
+		}
+
+		#totalTimeContainer {
+			position: absolute;
+			top: 20px;
+			left: 20px;
+			font-size: 1.5em;
+			text-align: left;
+		}
+
+		#selected,
+		#bestTime {
+			font-weight: bold;
+		}
+
+		#totalTime {
+			color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Prueba de Multiplicación</h1>
+	<div id="startOptions">
+		<button onclick="selectOption(50, false)">50 Puntos</button>
+		<button onclick="selectOption(100, false)">100 Puntos</button>
+		<button onclick="selectOption(200, false)">200 Puntos</button><br>
+		<button onclick="selectOption(50, true)">50 Puntos Difícil</button>
+		<button onclick="selectOption(100, true)">100 Puntos Difícil</button>
+		<button onclick="selectOption(200, true)">200 Puntos Difícil</button>
+	</div>
+	<div id="container" style="display: none;">
+		<div id="score">Puntuación: 0</div>
+		<div id="timer">Tiempo: 0.0 s</div>
+		<div id="problem"></div>
+		<input type="number" id="answer" placeholder="Tu respuesta" onkeypress="handleEnter(event)" disabled>
+		<div id="result"></div>
+		<button id="nextButton" style="display: none;" onclick="generateProblem()">Siguiente</button>
+	</div>
+	<div id="records">
+		<div>Mejor Tiempo 50 Puntos: <span id="record50">--</span></div>
+		<div>Mejor Tiempo 100 Puntos: <span id="record100">--</span></div>
+		<div>Mejor Tiempo 200 Puntos: <span id="record200">--</span></div>
+		<div>Mejor Tiempo 50 Puntos Difícil: <span id="record50_d">--</span></div>
+		<div>Mejor Tiempo 100 Puntos Difícil: <span id="record100_d">--</span></div>
+		<div>Mejor Tiempo 200 Puntos Difícil: <span id="record200_d">--</span></div>
+	</div>
+	<div id="session"></div>
+	<div id="info">
+		<label>Created by Jon Bilbao</label><br>
+		<label>Betatester Aitor Bilbao</label>
+	</div>
+	<div id="totalTimeContainer">
+		<div id="selected"></div>
+		<div id="infoDoble"></div>
+		<div id="infoNormal"></div>
+		<div id="infoMaxTime"></div><br>
+		<div id="totalTime"></div>
+		<div id="bestTime"></div>
+	</div>
+	<script>
+		let num1, num2, correctAnswer;
+		let intentos = 0;
+		let timerInterval, totalTimerInterval;
+		let timer = 0;
+		let totalTimer = 0;
+		let score = 0;
+		let gameStarted = false;
+		let targetScore = 0;
+		let isDifficult = false; // Indica si es modo difícil
+		let doublePointThreshold, pointThreshold, maxResponseTime; // Tiempo máximo permitido para responder
+		let repitiendo = false;
+		// Cargar récords desde localStorage al iniciar la página
+		function loadRecords() {
+			['50', '100', '200', '50_d', '100_d', '200_d'].forEach(key => {
+				const record = localStorage.getItem(`bestTime_${key}`);
+				document.getElementById(`record${key}`).innerText = record ? `${record} s` : '--';
+			});
+		}
+		loadRecords();
+		function generateSessionId() {
+			const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+			let result = "";
+			for (let i = 0; i < 5; i++) {
+				result += characters.charAt(Math.floor(Math.random() * characters.length));
+			}
+			return result;
+		}
+		const sessionId = generateSessionId();
+		document.getElementById("session").innerText = `Sesión: ${sessionId}`;
+		function selectOption(target, difficult) {
+			const nivel = difficult
+				? "dificil"
+				: "facil";
+			targetScore = target;
+			isDifficult = difficult;
+			doublePointThreshold = difficult ? 2 : 3;
+			pointThreshold       = difficult ? 4 : 6;
+			maxResponseTime      = difficult ? 6 : 9;
+			document.getElementById("selected").innerHTML = `Seleccionado: ${target} puntos ${nivel}.`;
+			document.getElementById("infoDoble").innerHTML = `Punto doble: ${doublePointThreshold}s.`
+			document.getElementById("infoNormal").innerHTML = `Punto normal: ${pointThreshold}s.`
+			document.getElementById("infoMaxTime").innerHTML = `Tiempo máx: ${maxResponseTime}s.`
+			document.getElementById("startOptions").style.display = "none";
+			document.getElementById("records").style.display = "none";
+			document.getElementById("container").style.display = "block";
+			// Mostrar el mejor tiempo para la opción seleccionada
+			const key = `${target}${difficult ? '_d' : ''}`;
+			const bestTime = parseFloat(localStorage.getItem(`bestTime_${key}`)) || null;
+			document.getElementById("bestTime").innerText = bestTime
+				? `Mejor tiempo: ${bestTime.toFixed(1)} s`
+				: "Mejor tiempo: --";
+			startTotalTimer(); // Iniciar el cronómetro total
+			generateProblem();
+		}
+		function generateProblem() {
+			intentos++;
+			clearInterval(timerInterval);
+			timer = 0;
+			document.getElementById("timer").innerText = `Tiempo: 0.0 s`;
+			document.getElementById("problem").innerText = "";
+			document.getElementById("result").innerText = "";
+			document.getElementById("nextButton").style.display = "none";
+			document.getElementById("answer").value = "";
+			document.getElementById("answer").disabled = false;
+			num1 = Math.floor(Math.random() * (9 - 3 + 1)) + 3; // Número entre 3 y 9
+			num2 = Math.floor(Math.random() * (9 - 4 + 1)) + 4; // Número entre 4 y 9
+			correctAnswer = num1 * num2;
+			document.getElementById("problem").innerText = `${num1} x ${num2} = ?`;
+			document.getElementById("answer").focus();
+			startTimer();
+		}
+		function startTimer() {
+			repitiendo = false;
+			timerInterval = setInterval(() => {
+				timer += 0.1;
+				document.getElementById("timer").innerText = `Tiempo: ${timer.toFixed(1)} s`;
+				if (timer >= maxResponseTime) {
+					clearInterval(timerInterval);
+					handleTimeout();
+					document.getElementById("timer").innerText = `Tiempo: ${maxResponseTime.toFixed(1)} s`;
+				}
+			}, 100);
+		}
+		function startTotalTimer() {
+			gameStarted = true;
+			totalTimerInterval = setInterval(() => {
+				totalTimer += 0.1;
+				document.getElementById("totalTime").innerText = `Tiempo total: ${totalTimer.toFixed(1)} s`;
+			}, 100);
+		}
+		function stopTotalTimer() {
+			clearInterval(totalTimerInterval);
+			gameStarted = false;
+			const key = `${targetScore}${isDifficult ? '_d' : ''}`;
+			const previousBest = parseFloat(localStorage.getItem(`bestTime_${key}`)) || Infinity;
+			document.getElementById("score").innerText = `Puntuación: ${score} puntos en ${intentos} intentos.`;
+			if (totalTimer < previousBest) {
+				localStorage.setItem(`bestTime_${key}`, totalTimer.toFixed(1));
+				document.getElementById("bestTime").innerText = `Mejor tiempo: ${totalTimer.toFixed(1)} s`;
+				alert(`¡Nuevo récord! Terminaste en ${totalTimer.toFixed(1)} segundos.`);
+			} else {
+				alert(`Terminaste en ${totalTimer.toFixed(1)} segundos. Tu récord es ${previousBest.toFixed(1)} segundos.`);
+			}
+		}
+		function handleTimeout() {
+			const resultElement = document.getElementById("result");
+			resultElement.innerText = `Tiempo agotado. La respuesta correcta era ${correctAnswer}.`;
+			resultElement.style.color = "red";
+			if (!repitiendo) updateScore(-1);
+			repite();
+		}
+		function handleEnter(event) {
+			if (event.key === "Enter") {
+				clearInterval(timerInterval);
+				const userAnswer = parseInt(document.getElementById("answer").value);
+				const resultElement = document.getElementById("result");
+				if (userAnswer === correctAnswer) {
+					if (!repitiendo) {
+						resultElement.innerText = `¡Correcto! Tiempo: ${timer.toFixed(1)} s.`;
+						resultElement.style.color = "green";
+						if (timer <= doublePointThreshold) {
+							updateScore(2);
+						} else if (timer <= pointThreshold) {
+							updateScore(1);
+						}
+					}
+					siguiente();
+				} else {
+					if (isNaN(userAnswer)) {
+						resultElement.innerText = `Incorrecto. Tu respuesta no era un numero. La respuesta correcta era: "${correctAnswer}".`;
+					} else {
+						resultElement.innerText = `Incorrecto. Tu respuesta fue: "${userAnswer}" La respuesta correcta era: "${correctAnswer}".`;
+					}
+					resultElement.style.color = "red";
+					if (!repitiendo) updateScore(-1);
+					repite();
+				}
+			}
+		}
+		function repite() {
+			repitiendo = true;
+			document.getElementById("answer").value = "";
+			document.getElementById("answer").focus();
+		}
+		function siguiente() {
+			document.getElementById("answer").disabled = true;
+			document.getElementById("nextButton").style.display = "inline-block";
+			document.getElementById("nextButton").focus();
+		}
+
+		function updateScore(points) {
+			score += points;
+			if (score < 0) score = 0;
+			document.getElementById("score").innerText = `Puntuación: ${score}`;
+			if (score >= targetScore) {
+				stopTotalTimer();
+			}
+		}
+	</script>
+</body>
+
+</html>
