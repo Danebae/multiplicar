@@ -240,7 +240,7 @@
 		}
 		function handleTimeout() {
 			const resultElement = document.getElementById("result");
-			resultElement.innerText = `Tiempo agotado. La respuesta correcta era ${correctAnswer}.`;
+			resultElement.innerText = `Tiempo agotado. Introduce la respuesta correcta para continuar.`;
 			resultElement.style.color = "red";
 			if (!repitiendo) updateScore(-1);
 			repite();
